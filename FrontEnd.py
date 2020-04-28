@@ -1,13 +1,6 @@
 from djitellopy import Tello
-import cv2
 import pygame
-import numpy as np
-import time
-
-# Speed of the drone
-S = 60
-# Frames per second of the pygame window display
-FPS = 25
+from threading import Thread
 
 
 class FrontEnd(object):
@@ -17,11 +10,11 @@ class FrontEnd(object):
             - T: Takeoff
             - L: Land
             - Arrow keys: Forward, backward, left and right.
-            - A and D: Counter clockwise and clockwise rotations
-            - W and S: Up and down.
+            - A and D (Q and D in azerty mode): Counter clockwise and clockwise rotations
+            - W and S (Z and S in azerty mode): Up and down.
     """
 
-    def __init__(self):
+    def __init__(self, drone_speed, azerty, frame_processor):
         # Init pygame
         pygame.init()
 
@@ -29,15 +22,24 @@ class FrontEnd(object):
         pygame.display.set_caption("Tello video stream")
         self.screen = pygame.display.set_mode([960, 720])
 
-        # Init Tello object that interacts with the Tello drone
+        self.drone_speed = drone_speed
+        if azerty:  # use variables to store the values of the non constant keys
+            self.counter_clk_rot_key = pygame.K_q
+            self.move_up_key = pygame.K_z
+        else:
+            self.counter_clk_rot_key = pygame.K_a
+            self.move_up_key = pygame.K_w
+
         self.tello = Tello()
+        self.frame_processor = frame_processor
+        self.frame_processed = False
+        self.should_stop = False
 
         # Drone velocities between -100~100
         self.for_back_velocity = 0
         self.left_right_velocity = 0
         self.up_down_velocity = 0
         self.yaw_velocity = 0
-        self.speed = 10
 
         self.send_rc_control = False
 
@@ -45,12 +47,13 @@ class FrontEnd(object):
         pygame.time.set_timer(pygame.USEREVENT + 1, 50)
 
     def run(self):
+        """check if some commands work and then launches the main control loop"""
 
         if not self.tello.connect():
             print("Tello not connected")
             return
 
-        if not self.tello.set_speed(self.speed):
+        if not self.tello.set_speed(10):
             print("Not set speed to lowest possible")
             return
 
@@ -63,40 +66,45 @@ class FrontEnd(object):
             print("Could not start video stream")
             return
 
-        frame_read = self.tello.get_frame_read()
+        # must be done in another thread to avoid fucking up commands reactivity
+        Thread(target=self.start_processing_frames, args=()).start()
 
-        should_stop = False
-        while not should_stop:
-
+        while not self.should_stop:
             for event in pygame.event.get():
                 if event.type == pygame.USEREVENT + 1:
                     self.update()
                 elif event.type == pygame.QUIT:
-                    should_stop = True
+                    self.should_stop = True
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
-                        should_stop = True
+                        self.should_stop = True
                     else:
                         self.keydown(event.key)
                 elif event.type == pygame.KEYUP:
                     self.keyup(event.key)
 
-            if frame_read.stopped:
-                frame_read.stop()
-                break
-
-            self.screen.fill([0, 0, 0])
-            frame = cv2.cvtColor(frame_read.frame, cv2.COLOR_BGR2RGB)
-            frame = np.rot90(frame)
-            frame = np.flipud(frame)
-            frame = pygame.surfarray.make_surface(frame)
-            self.screen.blit(frame, (0, 0))
-            pygame.display.update()
-
-            time.sleep(1 / FPS)
+            # if we are still processing our frame, we don't refresh the screen
+            if self.frame_processed:
+                self.screen.fill([0, 0, 0])
+                frame = pygame.surfarray.make_surface(self.frame_processor.out_frame)
+                self.screen.blit(frame, (0, 0))
+                pygame.display.update()
+                self.frame_processed = False
 
         # Call it always before finishing. To deallocate resources.
         self.tello.end()
+
+    def start_processing_frames(self):
+        """processes frames"""
+        frame_read = self.tello.get_frame_read()
+
+        while not self.should_stop:
+            if frame_read.stopped:
+                frame_read.stop()
+                self.should_stop = True
+
+            self.frame_processor.process(frame_read.frame)
+            self.frame_processed = True
 
     def keydown(self, key):
         """ Update velocities based on key pressed
@@ -104,21 +112,21 @@ class FrontEnd(object):
             key: pygame key
         """
         if key == pygame.K_UP:  # set forward velocity
-            self.for_back_velocity = S
+            self.for_back_velocity = self.drone_speed
         elif key == pygame.K_DOWN:  # set backward velocity
-            self.for_back_velocity = -S
+            self.for_back_velocity = -self.drone_speed
         elif key == pygame.K_LEFT:  # set left velocity
-            self.left_right_velocity = -S
+            self.left_right_velocity = -self.drone_speed
         elif key == pygame.K_RIGHT:  # set right velocity
-            self.left_right_velocity = S
-        elif key == pygame.K_w:  # set up velocity
-            self.up_down_velocity = S
+            self.left_right_velocity = self.drone_speed
+        elif key == self.move_up_key:  # set up velocity
+            self.up_down_velocity = self.drone_speed
         elif key == pygame.K_s:  # set down velocity
-            self.up_down_velocity = -S
-        elif key == pygame.K_a:  # set yaw counter clockwise velocity
-            self.yaw_velocity = -S
+            self.up_down_velocity = -self.drone_speed
+        elif key == self.counter_clk_rot_key:  # set yaw counter clockwise velocity
+            self.yaw_velocity = -self.drone_speed
         elif key == pygame.K_d:  # set yaw clockwise velocity
-            self.yaw_velocity = S
+            self.yaw_velocity = self.drone_speed
 
     def keyup(self, key):
         """ Update velocities based on key released
@@ -129,9 +137,9 @@ class FrontEnd(object):
             self.for_back_velocity = 0
         elif key == pygame.K_LEFT or key == pygame.K_RIGHT:  # set zero left/right velocity
             self.left_right_velocity = 0
-        elif key == pygame.K_w or key == pygame.K_s:  # set zero up/down velocity
+        elif key == self.move_up_key or key == pygame.K_s:  # set zero up/down velocity
             self.up_down_velocity = 0
-        elif key == pygame.K_a or key == pygame.K_d:  # set zero yaw velocity
+        elif key == self.counter_clk_rot_key or key == pygame.K_d:  # set zero yaw velocity
             self.yaw_velocity = 0
         elif key == pygame.K_t:  # takeoff
             self.tello.takeoff()
@@ -145,14 +153,3 @@ class FrontEnd(object):
         if self.send_rc_control:
             self.tello.send_rc_control(self.left_right_velocity, self.for_back_velocity, self.up_down_velocity,
                                        self.yaw_velocity)
-
-
-def main():
-    frontend = FrontEnd()
-
-    # run frontend
-    frontend.run()
-
-
-if __name__ == '__main__':
-    main()

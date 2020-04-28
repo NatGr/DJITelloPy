@@ -119,6 +119,10 @@ class Tello:
                 if self.response_state != 'ok':
                     self.response_state = self.response_state.decode('ASCII')
                     list = self.response_state.replace(';', ':').split(':')
+
+                    if list[0] != "pitch":
+                        list = list[list.index("pitch"):]  # sometime we have other info before pitch
+
                     self.pitch = int(list[1])
                     self.roll = int(list[3])
                     self.yaw = int(list[5])
