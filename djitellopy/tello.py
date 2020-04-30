@@ -756,10 +756,10 @@ class Tello:
         """Call this method when you want to end the tello object"""
         if self.is_flying:
             self.land()
-        if self.stream_on:
-            self.streamoff()
         if self.background_frame_read is not None:
             self.background_frame_read.stop()
+        if self.stream_on:
+            self.streamoff()
         if self.cap is not None:
             self.cap.release()
 
@@ -784,7 +784,8 @@ class BackgroundFrameRead:
         self.stopped = False
 
     def start(self):
-        Thread(target=self.update_frame, args=()).start()
+        self.thread = Thread(target=self.update_frame, args=())
+        self.thread.start()
         return self
 
     def update_frame(self):
@@ -796,3 +797,4 @@ class BackgroundFrameRead:
 
     def stop(self):
         self.stopped = True
+        self.thread.join()

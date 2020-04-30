@@ -1,6 +1,7 @@
 from djitellopy import Tello
 import pygame
 from threading import Thread
+import time
 
 
 class FrontEnd(object):
@@ -67,7 +68,8 @@ class FrontEnd(object):
             return
 
         # must be done in another thread to avoid fucking up commands reactivity
-        Thread(target=self.start_processing_frames, args=()).start()
+        processor_thread = Thread(target=self.start_processing_frames, args=())
+        processor_thread.start()
 
         while not self.should_stop:
             for event in pygame.event.get():
@@ -93,6 +95,7 @@ class FrontEnd(object):
 
         # Call it always before finishing. To deallocate resources.
         self.tello.end()
+        processor_thread.join()  # waits for the thread to end, self.tello threads should have ended before
 
     def start_processing_frames(self):
         """processes frames"""
@@ -103,7 +106,7 @@ class FrontEnd(object):
                 frame_read.stop()
                 self.should_stop = True
 
-            self.frame_processor.process(frame_read.frame)
+            self.frame_processor.process(frame_read.frame, self.tello.battery)
             self.frame_processed = True
 
     def keydown(self, key):

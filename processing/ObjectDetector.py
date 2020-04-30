@@ -9,8 +9,6 @@ class ObjectDetector(FrameProcessor):
     def __init__(self, model, input_size, threshold, nms):
         super().__init__()
         self.threshold, self.nms = threshold, nms
-        cfg = f"models/{model}/model.cfg"
-        weights = f"models/{model}/model.weights"
         classes = f"models/{model}/classes.txt"
 
         with open(classes) as file:
@@ -18,18 +16,30 @@ class ObjectDetector(FrameProcessor):
         np.random.seed(17)
         self.colors = np.random.randint(0, 255, size=(len(self.classes), 3), dtype="uint8")
 
-        self.net = cv2.dnn_DetectionModel(cv2.dnn.readNetFromDarknet(os.path.abspath(cfg), os.path.abspath(weights)))
-        self.net.setInputParams(size=(input_size, input_size), swapRB=False, crop=False,
-                                scale=1 / 255.0)  # we want to see the whole image
+        if "ssd" in model:
+            cfg = f"models/{model}/model.pbtxt"
+            weights = f"models/{model}/model.pb"
+            self.net = cv2.dnn_DetectionModel(os.path.abspath(weights), os.path.abspath(cfg))
+            self.net.setInputParams(size=(input_size, input_size), swapRB=False, crop=False,
+                                    mean=127.5)  # mean is because of ssd preprocessing,
+            # I should also have scale=2 / 255 but doing so fucks up the results...
+        elif "yolo" in model:
+            cfg = f"models/{model}/model.cfg"
+            weights = f"models/{model}/model.weights"
+            self.net = cv2.dnn_DetectionModel(os.path.abspath(weights), os.path.abspath(cfg))
+            self.net.setInputParams(size=(input_size, input_size), swapRB=False, crop=False,
+                                    scale=1 / 255.0)  # scale to go to the [0, 1] range
+        else:
+            raise ValueError("seems like there is a model name we can't handle")
 
-    def process(self, frame):
+    def process(self, frame: np.array, battery: int):
         """simply converts the color and disposition of the frame"""
         self.frame = frame
         super().preprocess_frame()
 
         out = self.net.detect(self.frame, self.threshold, self.nms)  # so that the time measurement is valid
         self.__draw_predictions(out)
-        super().postprocess_frame()
+        super().postprocess_frame(battery)
 
     def __draw_predictions(self, out):
         # Draw a bounding box for each prediction.

@@ -1,6 +1,6 @@
 # DJITelloPy
 Based on [**Damià Fuentes Escoté**'s work](https://github.com/damiafuentes/TelloSDKPy).  
-The initial version was extended with the possibility to detect objects in pseudo-real time (a few fps) with the camera.
+The initial version was extended with the possibility to detect objects or to perform key-point detection in pseudo-real time (a few fps) with the camera.
 Tested with Python 3.7, but it also may be compatabile with other versions.  
 
 ## Install through git clone

@@ -1,7 +1,7 @@
 import argparse
 import sys
 from FrontEnd import FrontEnd
-from processing import FrameProcessor, ObjectDetector
+from processing import FrameProcessor, ObjectDetector, PoseDetector
 
 
 # prints to stderr
@@ -15,17 +15,18 @@ if __name__ == '__main__':
                         default=60)
     parser.add_argument("--azerty", action="store_true",
                         help="use qzsd instead of asdw for left-hand control (better for an azerty keyboard)")
-    parser.add_argument("--option", help="which processing to perform during flight", default="object_detection",
-                        type=str, choices=["None", "object_detection"])
-    parser.add_argument("--model", help="which model to use (ignored when --option is None)",
-                        type=str, choices=["yolov3", "yolov3_tiny"], default="yolov3")
+    parser.add_argument("--model", help="which model to use. None for default video stream, "
+                                        "{yolo|ssd}.* for object recognition, "
+                                        "posenet for pose detection (limited to a single person)", type=str,
+                        choices=["None", "yolov3", "yolov3_tiny", "ssd_mobv1", "ssd_mobv2", "posenet"],
+                        default="yolov3")
     parser.add_argument("--threshold", type=float, default=.5,
-                        help="threshold under which predictions are ignored (ignored when --option is None)")
-    parser.add_argument("--nms", help="IOU threshold used in non maximum supression (ignored when --option isn't "
-                                      "object detection)", type=float, default=.3)
+                        help="threshold under which predictions are ignored (ignored when --model is None)")
+    parser.add_argument("--nms", help="IOU threshold used in non maximum supression (ignored when not doing object "
+                                      "detection)", type=float, default=.3)
     parser.add_argument("--input_size", type=int, default=320,
                         help="size to which the image is resized before being fed to a network. We recommend 320 for"
-                             "yolov3 and 416 for yolov3_tiny")
+                             "yolov3, 416 for yolov3_tiny, 300 for the ssds, input size is always 257 for posenet")
 
     args = parser.parse_args()
     if args.drone_speed < 10 or args.drone_speed > 100:
@@ -41,10 +42,14 @@ if __name__ == '__main__':
         eprint("As input image is 960*720 and 224 is quite small, input size must be within [224, 720]")
         exit(1)
 
-    if args.option == "None":
+    if args.model == "None":
         frame_processor = FrameProcessor()
-    elif args.option == "object_detection":
+    elif args.model.startswith("yolo") or args.model.startswith("ssd"):
         frame_processor = ObjectDetector(args.model, args.input_size, args.threshold, args.nms)
+    elif args.model == "posenet":
+        frame_processor = PoseDetector(args.model, args.threshold)
+    else:
+        raise ValueError("Not implemented")
 
     frontend = FrontEnd(args.drone_speed, args.azerty, frame_processor)
     frontend.run()
