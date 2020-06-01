@@ -14,8 +14,23 @@ class PoseDetector(FrameProcessor):
 
         with open(classes) as file:
             self.classes = [name[:-1] for name in file.readlines()]  # removes the tailing \n
-        np.random.seed(17)
-        self.colors = np.random.randint(0, 255, size=(len(self.classes), 3), dtype="uint8")
+        self.color = [5, 30, 81]  # dark blue
+
+        # get indexes between which to draw lines
+        classes_index = {cl: i for i, cl in enumerate(self.classes)}
+        self.draw_lines = [(classes_index['leftShoulder'], classes_index['rightShoulder']),
+                           (classes_index['leftShoulder'], classes_index['leftHip']),
+                           (classes_index['rightShoulder'], classes_index['rightHip']),
+                           (classes_index['leftHip'], classes_index['rightHip']),
+                           (classes_index['leftShoulder'], classes_index['leftElbow']),
+                           (classes_index['rightShoulder'], classes_index['rightElbow']),
+                           (classes_index['leftElbow'], classes_index['leftWrist']),
+                           (classes_index['rightElbow'], classes_index['rightWrist']),
+                           (classes_index['leftHip'], classes_index['leftKnee']),
+                           (classes_index['leftKnee'], classes_index['leftAnkle']),
+                           (classes_index['rightHip'], classes_index['rightKnee']),
+                           (classes_index['rightKnee'], classes_index['rightAnkle']),
+                            ]  # lists of offsets between which to draw lines
 
         self.interpreter = tflite.Interpreter(model_path=f"models/{model}/model.tflite")
         self.interpreter.allocate_tensors()
@@ -60,5 +75,10 @@ class PoseDetector(FrameProcessor):
     def __draw_predictions(self, kpt_x, kpt_y, index_to_keep):
         # Draw a point for each prediction.
         for i in index_to_keep:
-            cv2.circle(self.frame, (kpt_x[i], kpt_y[i]), radius=10, color=[int(j) for j in self.colors[i][0]],
-                       thickness=-1)
+            cv2.circle(self.frame, (kpt_x[i], kpt_y[i]), radius=10, color=self.color, thickness=-1)
+        # draw a line between two points
+        set_kept_indexes = set(index_to_keep)
+        for idx_1, idx_2 in self.draw_lines:
+            if idx_1 in set_kept_indexes and idx_2 in set_kept_indexes:
+                cv2.line(self.frame, (kpt_x[idx_1], kpt_y[idx_1]), (kpt_x[idx_2], kpt_y[idx_2]), color=self.color,
+                         thickness=2)

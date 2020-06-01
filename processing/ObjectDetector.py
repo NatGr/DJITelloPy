@@ -6,7 +6,7 @@ from .FrameProcessor import FrameProcessor
 
 class ObjectDetector(FrameProcessor):
     """Detects objects within a frame and annotates their position and confidence"""
-    def __init__(self, model, input_size, threshold, nms):
+    def __init__(self, model, input_size, threshold, nms, use_gpu):
         super().__init__()
         self.threshold, self.nms = threshold, nms
         classes = f"models/{model}/classes.txt"
@@ -31,6 +31,10 @@ class ObjectDetector(FrameProcessor):
                                     scale=1 / 255.0)  # scale to go to the [0, 1] range
         else:
             raise ValueError("seems like there is a model name we can't handle")
+
+        if use_gpu:
+            self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+            self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 
     def process(self, frame: np.array, battery: int):
         """simply converts the color and disposition of the frame"""

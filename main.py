@@ -27,6 +27,12 @@ if __name__ == '__main__':
     parser.add_argument("--input_size", type=int, default=320,
                         help="size to which the image is resized before being fed to a network. We recommend 320 for"
                              "yolov3, 416 for yolov3_tiny, 300 for the ssds, input size is always 257 for posenet")
+    parser.add_argument("--use_gpu", action="store_true",
+                        help="Set to true if you want to use gpu instead of cpu to perform inference, will have no "
+                             "effect if model is None or posenet")
+    parser.add_argument("--video_name", default="", type=str,
+                        help="If not empty, name of the file where video will be recorded, otherwise the video is not "
+                             "saved on disk")
 
     args = parser.parse_args()
     if args.drone_speed < 10 or args.drone_speed > 100:
@@ -45,11 +51,11 @@ if __name__ == '__main__':
     if args.model == "None":
         frame_processor = FrameProcessor()
     elif args.model.startswith("yolo") or args.model.startswith("ssd"):
-        frame_processor = ObjectDetector(args.model, args.input_size, args.threshold, args.nms)
+        frame_processor = ObjectDetector(args.model, args.input_size, args.threshold, args.nms, args.use_gpu)
     elif args.model == "posenet":
         frame_processor = PoseDetector(args.model, args.threshold)
     else:
         raise ValueError("Not implemented")
 
-    frontend = FrontEnd(args.drone_speed, args.azerty, frame_processor)
+    frontend = FrontEnd(args.drone_speed, args.azerty, frame_processor, args.video_name)
     frontend.run()
