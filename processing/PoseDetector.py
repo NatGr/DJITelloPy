@@ -64,12 +64,13 @@ class PoseDetector(FrameProcessor):
         kpt_y = (max_rows / (heatmaps.shape[0] - 1) + offsets[max_rows, max_cols, np.arange(heatmaps.shape[2])] /
                  self.input_shape[1]) * self.frame.shape[0]
         kpt_x = self.frame.shape[1] * (max_cols / (heatmaps.shape[1] - 1) +
-                 offsets[max_rows, max_cols, np.arange(heatmaps.shape[2], 2 * heatmaps.shape[2])] / self.input_shape[2])
+                offsets[max_rows, max_cols, np.arange(heatmaps.shape[2], 2 * heatmaps.shape[2])] / self.input_shape[2])
 
         # show points above threshold
-        index_to_keep = np.argwhere(heatmaps[max_rows, max_cols, np.arange(heatmaps.shape[2])] > self.threshold)
+        index_to_keep = np.argwhere(heatmaps[max_rows, max_cols, np.arange(heatmaps.shape[2])] > self.threshold)\
+            .flatten()
 
-        self.__draw_predictions(kpt_x, kpt_y, index_to_keep)
+        self.__draw_predictions(kpt_x.astype(np.int), kpt_y.astype(np.int), index_to_keep)
         super().postprocess_frame(battery)
 
     def __draw_predictions(self, kpt_x, kpt_y, index_to_keep):

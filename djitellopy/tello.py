@@ -285,7 +285,7 @@ class Tello:
             - height?: get height (cm): x: 0-3000
             - temp?: get temperature (°C): x: 0-90
             - attitude?: get IMU attitude data: pitch roll yaw
-            - baro?: get barometer value (m): x
+            - baro?: get barometer value (midas): x
             - tof?: get distance value from TOF (cm): x: 30-1000
             - wifi?: get Wi-Fi SNR: snr
 
@@ -562,7 +562,7 @@ class Tello:
         Returns:
             bool: True for successful, False for unsuccessful
         """
-        return self.send_control_command('go %s %s %s %s m%s' % (x, y, z, speed, mid))
+        return self.send_control_command('go %s %s %s %s midas%s' % (x, y, z, speed, mid))
 
     @accepts(x1=int, y1=int, z1=int, x2=int, y2=int, z2=int, speed=int, mid=int)
     def curve_xyz_speed_mid(self, x1, y1, z1, x2, y2, z2, speed, mid):
@@ -579,7 +579,7 @@ class Tello:
         Returns:
             bool: True for successful, False for unsuccessful
         """
-        return self.send_control_command('curve %s %s %s %s %s %s %s m%s' % (x1, y1, z1, x2, y2, z2, speed, mid))
+        return self.send_control_command('curve %s %s %s %s %s %s %s midas%s' % (x1, y1, z1, x2, y2, z2, speed, mid))
 
     @accepts(x=int, y=int, z=int, speed=int, yaw=int, mid1=int, mid2=int)
     def go_xyz_speed_yaw_mid(self, x, y, z, speed, yaw, mid1, mid2):
@@ -596,7 +596,7 @@ class Tello:
         Returns:
             bool: True for successful, False for unsuccessful
         """
-        return self.send_control_command('jump %s %s %s %s %s m%s m%s' % (x, y, z, speed, yaw, mid1, mid2))
+        return self.send_control_command('jump %s %s %s %s %s midas%s midas%s' % (x, y, z, speed, yaw, mid1, mid2))
 
     def enable_mission_pads(self):
         return self.send_control_command("mon")
@@ -713,7 +713,7 @@ class Tello:
         return dict(zip(r[::2], [int(i) for i in r[1::2]]))  # {'pitch': xxx, 'roll': xxx, 'yaw': xxx}
 
     def get_barometer(self):
-        """Get barometer value (m)
+        """Get barometer value (midas)
         Returns:
             False: Unsuccessful
             int: 0-100

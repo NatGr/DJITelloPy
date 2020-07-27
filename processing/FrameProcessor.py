@@ -8,8 +8,9 @@ class FrameProcessor():
     pygames. This class itself doesn't do much but it will be inherited by a more specialized class"""
     def __init__(self):
         super(FrameProcessor, self).__init__()
-        self.frame = np.zeros((3, 960, 720), dtype=np.uint8)
-        self.out_frame = np.zeros((3, 960, 720), dtype=np.uint8)
+        self.frame = np.zeros((3, 960, 720), dtype=np.uint8)  # frame is transposed during postprocessing for pygame
+        self.out_frame = np.zeros((3, 960, 720), dtype=np.uint8)  # out_frame is transposed during postprocessing for
+        # pygame
         self.fps = 0
         self.margin = 5  # space between the top of label and the top of the screen
 

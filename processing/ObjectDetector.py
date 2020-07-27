@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import os
 from .FrameProcessor import FrameProcessor
-
+import time
 
 class ObjectDetector(FrameProcessor):
     """Detects objects within a frame and annotates their position and confidence"""

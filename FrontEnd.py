@@ -15,7 +15,7 @@ class FrontEnd(object):
             - W and S (Z and S in azerty mode): Up and down.
     """
 
-    def __init__(self, drone_speed, azerty, frame_processor, video_name):
+    def __init__(self, drone_speed, azerty, frame_processor):
         # Init pygame
         pygame.init()
 
@@ -30,8 +30,6 @@ class FrontEnd(object):
         else:
             self.counter_clk_rot_key = pygame.K_a
             self.move_up_key = pygame.K_w
-
-        self.out = cv2.VideoWriter(video_name, cv2.CAP_FFMPEG, -1, 20.0, (960, 720)) if len(video_name) != 0 else None
 
         self.tello = Tello()
         self.frame_processor = frame_processor
@@ -91,15 +89,12 @@ class FrontEnd(object):
             if self.frame_processed:
                 self.screen.fill([0, 0, 0])
                 frame = pygame.surfarray.make_surface(self.frame_processor.out_frame)
-                if self.out is not None:
-                    self.out.write(frame)
                 self.screen.blit(frame, (0, 0))
                 pygame.display.update()
                 self.frame_processed = False
 
         # Call it always before finishing. To deallocate resources.
         self.tello.end()
-        self.out.release()
         processor_thread.join()  # waits for the thread to end, self.tello threads should have ended before
 
     def start_processing_frames(self):
