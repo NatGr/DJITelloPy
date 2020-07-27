@@ -9,13 +9,14 @@ in frames per second:
 
 |  | Yolov4 320 | Yolov3 320 | Yolov3 tiny 416 | ssd_mobv2 300 | ssd_mobv1 300 | posenet 257 | MaskRCNN 320 | Midas 384 |   
 | -------- | ------- | ---------- | ----------- | --------- | --------- | ------- |   ------- |   ------- |    
-| mac book air 2014 | |   |             |           |           |         |       |      |    
+| mac book air 2014 | ? | ~1 | ~4 | ~3.5 | ~4 | ~4 | ~0.2 | ? |    
 | Intel i5-4670 | ~2 | ~2 | ~10 | ~5 | ~6 | ~4 | ~0.5 | ~0.5 |   
 | NVIDIA GTX 970 | ~9 | ~7 | ~11 | ~4 | ~5 | - |   ~3   |   ~4  |    
 
 * the i5 and the gtx 970 are hardware that costed around 200 euros each in 2016. These were part of a desktop "gaming" computer.
 * For object detection models, FPS vary depending on what is on screen, we show average cases. This seems to be due to the significant time required to draw all of the boxes in an image (up to 0.1s, a good portion of it being spent in other threads -- A solution would be to reimplement everything in C++).
 * GPU is necessary for bigger networks and does not really bring speed improvements for smaller ones
+* There are nets with unknown perfs on the macbook air because 
 
 
 ## Install
