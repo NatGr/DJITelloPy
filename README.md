@@ -16,7 +16,7 @@ in frames per second:
 * the i5 and the gtx 970 are hardware that costed around 200 euros each in 2016. These were part of a desktop "gaming" computer.
 * For object detection models, FPS vary depending on what is on screen, we show average cases. This seems to be due to the significant time required to draw all of the boxes in an image (up to 0.1s, a good portion of it being spent in other threads -- A solution would be to reimplement everything in C++).
 * GPU is necessary for bigger networks and does not really bring speed improvements for smaller ones
-* There are nets with unknown perfs on the macbook air because 
+* There are nets with unknown perfs on the macbook air because opencv 4.4 isn't installed on it (it's not available on pip atm).
 
 
 ## Install
