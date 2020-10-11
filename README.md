@@ -30,18 +30,7 @@ You need to download models before usning them, see models/README.md on that.
 ### Compile OpenCV on ubuntu:
 The tutorial is very well made but does not [include cuda support](https://gist.github.com/YashasSamaga/985071dc57885348bec072b4dc23824f). To compile with that you should change the cmake command to:
 ```
-cmake -D CMAKE_BUILD_TYPE=RELEASE \                                                                                                                                                 
-    -D CMAKE_INSTALL_PREFIX=/usr/local \
-    -D WITH_CUDA=ON \
-    -D WITH_CUDNN=ON \
-    -D OPENCV_DNN_CUDA=ON \
-    -D INSTALL_PYTHON_EXAMPLES=OFF \
-    -D OPENCV_EXTRA_MODULES_PATH=/home/nathan/opencv_contrib/modules \
-    -D PYTHON_EXECUTABLE=/home/nathan/miniconda3/bin/python3.7 \
-    -D PYTHON_PACKAGES_PATH=/home/nathan/miniconda3/lib/python3.7/site-packages \
-    -D PYTHON_LIBRARY=/home/nathan/miniconda3/lib/libpython3.7m.so \
-    -D OPENCV_ENABLE_NONFREE=ON \
-    -D BUILD_EXAMPLES=OFF ..
+cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local -D WITH_CUDA=ON -D WITH_CUDNN=ON -D OPENCV_DNN_CUDA=ON -D INSTALL_PYTHON_EXAMPLES=OFF -D OPENCV_EXTRA_MODULES_PATH=/home/nathan/opencv_contrib/modules -D PYTHON_EXECUTABLE=/home/nathan/miniconda3/bin/python3.7 -D PYTHON_PACKAGES_PATH=/home/nathan/miniconda3/lib/python3.7/site-packages -D PYTHON_LIBRARY=/home/nathan/miniconda3/lib/libpython3.7m.so -D OPENCV_ENABLE_NONFREE=ON -D BUILD_EXAMPLES=OFF ..
 ```
 I let my paths to give an idea of their locations, these are to change of course (and don't use "~" instead of "/home/use", it fucks everything up).   
 Additionnally, when using CPU only, compiling opencv is around 30% faster on the gaming pc, while I saw no differnece on the macbook.  
